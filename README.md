@@ -1,4 +1,15 @@
-# TinyLlama-Linux-QA
+<div align="center">
+<h1>TinyLlama-Linux-QA</h1>
+<h3></h3>
+</div>
+
+<div align="center">
+
+![](https://img.shields.io/github/last-commit/tiam4tt/tinyllama-linux-qa?style=for-the-badge&labelColor=11111b&color=b4befe)
+![](https://img.shields.io/github/repo-size/tiam4tt/TinyLlama-Linux-QA?style=for-the-badge&labelColor=11111b&color=94e2d5)
+![](https://img.shields.io/badge/model_type-seq2seq-e5c890?style=for-the-badge&labelColor=11111b)
+![](https://img.shields.io/badge/task-QnA-eba0ac?style=for-the-badge&labelColor=11111b)
+</div>
 
 ## Overview
 TinyLlama-Linux-QA is a specialized question-answering model designed to handle Linux-related queries. It is based on the TinyLlama architecture and has been fine-tuned on a dataset of Linux questions and answers.
@@ -8,7 +19,7 @@ TinyLlama-Linux-QA is a specialized question-answering model designed to handle 
 ## Dataset
 The model has been trained on a dataset that includes a wide range of Linux-related questions, covering topics such as system administration, command-line usage, shell scripting, and more. The dataset is designed to provide comprehensive coverage of common Linux tasks and issues.
 
-The data is accessible within this repository, or through [kaggle](https://www.kaggle.com/datasets/tiamatt/reddit-curated-linux-qna).
+The data is accessible within this repository, or on [kaggle](https://www.kaggle.com/datasets/tiamatt/reddit-curated-linux-qna).
 
 ## Training
 
@@ -27,21 +38,47 @@ The model has been uploaded to Hugging Face and is available for use under the m
 
 ## Usage
 
-To use the TinyLlama-Linux-QA model, you can load it using the Hugging Face Transformers library. Here is an example of how to do this:
+To use the TinyLlama-Linux-QA model, you can load it using the Hugging Face Transformers library, or with Unsloth for lighter resource consumption. Here is an example using Unsloth:
 
 ```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from unsloth import FastLanguageModel
 model_name = "tiam4tt/TinyLlama-1.1B-chat.v1.0-linux-qna"
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=model_name,
+            max_seq_length=256,
+            dtype=None, # Use None for automatic dtype detection
+            load_in_4bit=True,
+        )
+        # Enable the model for inference
+        FastLanguageModel.for_inference(model)
 ```
 You can then use the model to generate answers to Linux-related questions by providing a prompt and using the `generate` method.
 
 ```python
-prompt = "What is the command to list files in a directory?"
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-outputs = model.generate(**inputs, max_new_tokens=128)
-answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
+PROMPT = """Below is a question relating to the Linux operating system, paired with a paragraph describing further context. Write a short, simple, concise, and comprehensive response to the question.
+### Question
+{}
+### Context
+{}
+### Response
+{}"""
+
+question = "How do I check the disk usage of a directory in Linux?"
+
+inputs = tokenizer(PROMPT.format(
+    question,
+    "",
+    "" # Leave blank for generation
+    ),
+    return_tensors="pt").to(model.device)
+output = model.generate(
+            **inputs,
+            max_new_tokens=256,
+            do_sample=True,
+            temperature=1.0,
+            top_p=0.9
+        )
+answer = tokenizer.decode(output[0], skip_special_tokens=True)
 print(answer)
 ```
 
