@@ -1,0 +1,6 @@
+.env
+.ropeproject
+*cache
+__huggingface_repos__.json
+*.zip
+model
